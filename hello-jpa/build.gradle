@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+}
+
+group 'jpa-basic'
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'com.h2database', name: 'h2', version: '1.4.199'
+    compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '5.4.9.Final'
+}

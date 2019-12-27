@@ -7,30 +7,34 @@ import javax.persistence.Persistence;
 import java.util.List;
 
 public class JpaMain {
-    public static void main(String[] args) {
-        final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("hello");
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
+    final static EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("hello");
+
+    public static void main(String[] args) {
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         final EntityTransaction transaction = entityManager.getTransaction();
+        final Long id = 1L;
+
         transaction.begin();
 
         try {
-            // insert
-            /*
+            // 비영속
             Member member = new Member();
-            member.setId(1L);
+            member.setId(id);
             member.setName("test");
+
+            // 영속
             entityManager.persist(member);
-             */
 
             // select
-            /*
-            Member findMember = entityManager.find(Member.class, 1L);
+            Member findMember = entityManager.find(Member.class, id);
             System.out.println("id = " + findMember.getId());
             System.out.println("name = " + findMember.getName());
-             */
 
-            // delete
+            // 준영속
+            //entiryManager.detach(member);
+
+            // 삭제
             //entityManager.remove(findMember);
 
             /**
@@ -55,12 +59,12 @@ public class JpaMain {
              *     from Member member0_
              */
             List<Member> members = entityManager.createQuery("SELECT M. FROM Member M", Member.class)
-//                                                .setFirstResult(1)
-//                                                .setMaxResults(10) paging - 1번부터 10개 갖고
+                                                .setFirstResult(1)
+                                                .setMaxResults(10) //paging - 1번부터 10개 갖고와라
                                                 .getResultList();
 
             members.stream()
-                    .forEach(member -> System.out.println(member.getName()));
+                    .forEach(m -> System.out.println(m.getName()));
 
             transaction.commit();
         } catch (Exception e) {

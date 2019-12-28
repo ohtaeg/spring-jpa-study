@@ -13,7 +13,7 @@ public class JpaMain {
     public static void main(String[] args) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         final EntityTransaction transaction = entityManager.getTransaction();
-        final Long id = 1L;
+        final Long id = 2L;
 
         transaction.begin();
 
@@ -58,7 +58,7 @@ public class JpaMain {
              *          member0_.name as name2_0_
              *     from Member member0_
              */
-            List<Member> members = entityManager.createQuery("SELECT M. FROM Member M", Member.class)
+            List<Member> members = entityManager.createQuery("SELECT M FROM Member M", Member.class)
                                                 .setFirstResult(1)
                                                 .setMaxResults(10) //paging - 1번부터 10개 갖고와라
                                                 .getResultList();

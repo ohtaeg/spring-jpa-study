@@ -31,6 +31,8 @@ public class JpaMain {
             System.out.println("id = " + findMember.getId());
             System.out.println("name = " + findMember.getName());
 
+            //executeJPQL(entityManager);
+
             // 준영속
             //entiryManager.detach(member);
 
@@ -73,5 +75,25 @@ public class JpaMain {
             entityManager.close();
             entityManagerFactory.close();
         }
+    }
+
+    // JPQL을 통한 플러시
+    public static void executeJPQL(EntityManager entityManager) {
+        Member member = new Member();
+        member.setId(11L);
+        member.setName("ohtaeg");
+
+        Member otherMember = new Member();
+        otherMember.setId(22L);
+        otherMember.setName("ohtaeg2");
+
+        entityManager.persist(member);
+        entityManager.persist(otherMember);
+
+        List<Member> members = entityManager.createQuery("SELECT M FROM Member M", Member.class)
+                                            .getResultList();
+
+        members.stream()
+                .forEach(m -> System.out.println(m.getId() + ", " + m.getName()));
     }
 }

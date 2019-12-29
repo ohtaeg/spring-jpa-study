@@ -154,6 +154,47 @@ Java Persistence Query Language
 - 상태를 비교하여 변경이 되었다면 UPDATE SQL을 생성하여 `쓰기 지연 SQL 저장소`에 저장 후 DB에 접근하여 커밋한다.
 - 이렇게 내부적인 처리로 인해 따로 UPDATE 메서드가 존재하지 않고 자바 컬렉션 처럼 다룰 수 있도록 지원해준다.
 
+### `플러시` (Flush)
+- `영속성 컨텍스트`의 변경 내용을 DB에 반영하여 `영속성 컨텍스트`와 DB를 동기화 하 작업.
+- `플러시`를 하고 나서도 `영속성 컨텍스`는 그대로 유지 된다.
+- `플러시` 동작
+    1. 변경 감지를 수행
+    2. 수정된 엔티티가 존재하면 `쓰기 지연 SQL 저장소`에 등록
+    3. `쓰기 지연 SQL 저장소`의 쿼리를 DB에 전송 (insert, update, delete)
+
+- `영속성 컨텍스트`를 `플러시`하는 방법
+<pre>
+    <code>1. entityManager.flush(); // 직접 호출 (직접 호출할 일은 없으나 테스트시 필요할 수 있음)</code>
+    <code>2. transaction.commit(); // 자동 호출</code>
+    <code>3. JPQL 쿼리 실행         // 자동 호출</code>
+</pre>
+
+- `JPQL` 실행시 `플러시`가 자동으로 호출되는 이유 <br>
+ex) <br>
+<pre>
+    <code>entityManager.persist(member);</code>
+    <code>entityManager.persist(otherMember);</code>
+    <code>// persist() 이후 중간에 JPQL 실행</code>
+    <code>List&lt;Member&gt; members = entityManager.createQuery("SELECT M FROM Member M", Member.class)
+                                              .getResultList()</code>
+</pre>
+이런 경우에 트랜잭션 커밋 전이라 아직 DB에 접근하지 않았으므로, <br>
+persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발생한다.
+그렇기에 기본 모드가 `JPQL` 실행시 자동으로 `플러시`를 호출 한다.
+
+- `플러시` 모드 옵션
+    - FlushModeType.AUTO : 커밋이나 쿼리를 실행할 `플러시` (기본값)
+    - FlushModeType.COMMIT : 커밋할때만 `플러시`
+    - `플러시` 모드 옵션을 건드릴 일이 없다.
+<pre>
+    <code>entitiy.setFlushMode(FlushModeType.AUTO)</code>
+</pre>
+
+
+
+
+
+
 
 
 

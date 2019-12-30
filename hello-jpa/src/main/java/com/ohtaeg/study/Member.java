@@ -2,14 +2,15 @@ package com.ohtaeg.study;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
-//@Table(name = "USER")
+@Table(uniqueConstraints = {@UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"name"})})
 public class Member {
 
     @Id
     private Long id;
-    //@Column(name ="USER_NAME")
     private String name;
 
     public Member() {

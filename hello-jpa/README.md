@@ -201,6 +201,65 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     <code>entityManager.close();        // 영속성 컨텍스트 종료</code>
 </pre>
 
+<br>
+
+----
+
+<br>
+
+### DB 스키마 생성
+- JPA는 어플리케이션 로딩 시점에 @Entity 어노테이션이 적용된 클래스들을 쭉 훑고나서 DB `방언`을 통해 적절한 DDL을 자동 생성 해주고 DB 테이블을 생성하는 기능을 제공 한다.
+- 자동 생성된 DDL은 주로 로컬 환경에서만 사용하는 것을 권장하고, 운영에서는 다듬고 사용해야 한다.
+- 자동 생성 옵션은 persistence.xml에서 다음과 같은 옵션을 설정하면 된다.
+<pre>
+    <code>&lt;property name="hibernate.hbm2ddl.auto" value="create" /&gt;</code>
+</pre>
+- 자동 옵션
+    - create : 기존 테이블 삭제후 다시 생성 (DROP + CREATE)
+    - create-drop : create와 같으나 어플리케이션 종료하는 시점에 테이블 DROP
+    - update : 변경 부분만 반영
+    - validate : 기존에 존재하던 엔티티와 테이블이 정상 매핑되었는지 확인
+    - none : 사용하지 않음 == 주석처리  
+    - 운영에서는 절대 create, create-drop, update 사용 하지 말것.
+    - 운영은 validate or none을 권장.
+    
+<br>
+
+#### DDL 생성 기능
+- DDL 자동 생성할때만 사용되고, JPA 실행 로직에는 영향을 주지 않는다.
+- 제약조건 추가 
+    - <pre>
+        <code>@Column(unique = true, length = 10)</code>
+    </pre>
+- 유니크 제약 조건 추가
+    - <pre>
+        <code>@Table(uniqueConstraints = {</code>
+        <code>      @UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"name"})</code>
+        <code>})</code>
+    </pre>
+<br>
+
+## 연관관계 매핑
+
+### 객체와 테이블 매핑
+- @Entity : 해당 어노테이션이 붙은 객체는 JPA가 관리, `Entity`라고 한다.
+- <u>기본 생성자 필수 (public or protected)</u>
+- final 클래스, interface, inner 클래스는 엔티티로 관리를 못한다.
+- 저장할 필드에 final 키워드를 사용하면 안된다.
+
+@Table
+
+| 속성              |      기능      |  기본값 |
+|------------------|:--------------|:-------|
+|name              | 매핑할 테이블 이름 | 엔티티 이름 |
+|catalog           | DB Catalog    |    |
+|schma             | DB Schema     |   |
+|uniqueConstraints | 유니크 제약 조건  |    |
+
+
+
+
+
 
 
 

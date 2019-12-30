@@ -1,25 +1,33 @@
 package com.ohtaeg.study;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
-@Table(uniqueConstraints = {@UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"name"})})
+@Table(uniqueConstraints = {@UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"userName"})})
 public class Member {
-
     @Id
     private Long id;
+
+    @Column(name = "userName")
     private String name;
 
-    public Member() {
-    }
+    private Integer age;
 
-    public Member(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+    @Enumerated(EnumType.STRING)
+    private RoleType roleType;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdDate;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastModifiedDate;
+
+    @Lob
+    private String description;
+
+
+    public Member() { }
 
     public Long getId() {
         return id;
@@ -35,5 +43,45 @@ public class Member {
 
     public void setName(final String name) {
         this.name = name;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(final Integer age) {
+        this.age = age;
+    }
+
+    public RoleType getRoleType() {
+        return roleType;
+    }
+
+    public void setRoleType(final RoleType roleType) {
+        this.roleType = roleType;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(final Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public Date getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(final Date lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
     }
 }

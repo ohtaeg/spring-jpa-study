@@ -242,19 +242,51 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 ## 연관관계 매핑
 
 ### 객체와 테이블 매핑
-- @Entity : 해당 어노테이션이 붙은 객체는 JPA가 관리, `Entity`라고 한다.
-- <u>기본 생성자 필수 (public or protected)</u>
-- final 클래스, interface, inner 클래스는 엔티티로 관리를 못한다.
-- 저장할 필드에 final 키워드를 사용하면 안된다.
+- **@Entity** : 해당 어노테이션이 붙은 객체는 JPA가 관리, `Entity`라고 한다.
+    - <u>기본 생성자 필수 (public or protected)</u>
+    - final 클래스, interface, inner 클래스는 `Entity`로 관리를 못한다.
+    - 저장할 필드에 final 키워드를 사용하면 안된다.
 
-@Table
+- **@Table**
 
-| 속성              |      기능      |  기본값 |
-|------------------|:--------------|:-------|
-|name              | 매핑할 테이블 이름 | 엔티티 이름 |
-|catalog           | DB Catalog    |    |
-|schma             | DB Schema     |   |
-|uniqueConstraints | 유니크 제약 조건  |    |
+    | 속성              |      기능      |  기본값 |
+    |------------------|:--------------|:-------|
+    |name              | 매핑할 테이블 이름 | 엔티티 이름 |
+    |catalog           | DB Catalog    |    |
+    |schema             | DB Schema     |    |
+    |uniqueConstraints | 유니크 제약 조건  |    |
+
+- **@Column** : 컬럼 매핑
+
+    | 속성                 |      기능      |  기본값  |
+    |---------------------|:--------------|:-------|
+    |name                 | 필드와 매핑할 테이블 컬럼의 이름 | 객체 필드 이 |
+    |insertable, updatable| 등록, 변경 가능 여부          |True   |
+    |nullable             | DDL 기능, null값의 허용 여부 설정, false일 경우 not null 제약조건이 붙음|True    |
+    |length               | DDL 기능, 문자 길이 제약 조건 | 255 |
+    |columnDefinition     | DDL 기능, 문자열로 직접 컬럼정보 설정 가능.(필드 크기, 디폴트값 등등)| |
+    |scale                | DDL 기능, 소수의 자릿수, double, float 타입에는 적용이 안된다. 주로 BigDecimal에 사용| 2 | 
+    |precision            | 소숫점을 포함한 전체 자릿 수, 주로 BigDecimal이나 BigInteger에 사용| 19 |
+    
+- **@Enumerated** : Enum타입 매핑
+    - EnumType.ORDINAL : enum의 순서를 DB에 저장, 사용하지 말것.
+    - EnumType.STRING  : enum 이름을 DB에 저장 
+    
+- **@Temporal** : 날짜 타입 필드 매핑
+    - java8 이전은 @Temporal 어노테이션 사용
+        - DATE : java.sql.Date (2019-12-30)
+        - TIME : java.sql.Time (16:58:00)
+        - TIMESTAMP : java.sql.Timestamp (2019-12-30 16:58:00) 
+    - java8 이후는 @Temporal 어노테이션 생략 가능
+        - 타입에 맞게 알아서 설정해준다.
+        - LocalDate : (2019-12-30)
+        - LocalDateTime : (2019-12-30 16:58:00)
+        
+- **@Lob** : VARCHAR 타입보다 큰 CONTENT를 넣고 싶을때 BLOB, CLOB 매핑
+    - 문자열일 경우 CLOB로 매핑
+    - 나머지는 BLOB로 매핑
+    
+- **@Transient** : DB랑 관련없는 특정 필드를 매핑하고 싶지 않을때
 
 
 

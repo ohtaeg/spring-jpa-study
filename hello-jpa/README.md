@@ -1,13 +1,17 @@
 # Project
 JPA 입문 공부를 위한 프로젝트
 
-<br>
-
-## 환경 세팅 (version)
+### 환경 세팅 (version)
 [Spring boot Dependency versions 참고](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/html/appendix-dependency-versions.html#appendix-dependency-versions)
 - H2 DB : 1.4.199
 - Hibernate : 5.4.9 Final
 - JPA 2.2
+
+### 요구사항
+- 회원은 상품을 주문할 수 있다.
+    - 회원은 여러 번 주문할 수 있다.
+- 주문 시 여러 종류의 상품을 선택할 수 있다.
+    - 같은 상품도 여러번 주문될 수 있다.
 
 <br>
 
@@ -254,7 +258,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     |------------------|:--------------|:-------|
     |name              | 매핑할 테이블 이름 | 엔티티 이름 |
     |catalog           | DB Catalog    |    |
-    |schema             | DB Schema     |    |
+    |schema            | DB Schema     |    |
     |uniqueConstraints | 유니크 제약 조건  |    |
 
 - **@Column** : 컬럼 매핑
@@ -269,7 +273,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     |scale                | DDL 기능, 소수의 자릿수, double, float 타입에는 적용이 안된다. 주로 BigDecimal에 사용| 2 | 
     |precision            | 소숫점을 포함한 전체 자릿 수, 주로 BigDecimal이나 BigInteger에 사용| 19 |
     
-- **@Enumerated** : Enum타입 매핑
+- **@Enumerated** : Enum 타입 매핑
     - EnumType.ORDINAL : enum의 순서를 DB에 저장, 사용하지 말것.
     - EnumType.STRING  : enum 이름을 DB에 저장 
     

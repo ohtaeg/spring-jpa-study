@@ -5,8 +5,12 @@ import java.util.Date;
 
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"userName"})})
+@SequenceGenerator(name = "member_seq_generator"
+                , sequenceName = "member_sequence"
+                ,initialValue = 1, allocationSize = 100)
 public class Member {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_seq_generator")
     private Long id;
 
     @Column(name = "userName")

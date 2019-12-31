@@ -51,8 +51,7 @@ JPA 입문 공부를 위한 프로젝트
 Java Persistence Query Language
 - SQL과 비슷한 문법을 가진 **객체지향 쿼리**
 - SQL을 추상화한 **객체지향 쿼리**
-- JPQL은 테이블이 아닌 **객체**를 탐색
-- SQL은 데이터베이스 테이블 대상으로 탐색
+- JPQL은 테이블이 아닌 **객체**를 탐색, SQL은 데이터베이스 테이블 대상으로 탐색
 - JPQL을 통해 검색할때 `Entity` 객체 대상으로 검색이 복잡한 쿼리 수행 가능
 - JPQL을 실행하면 `방언`과 합쳐져 현재 DB에 맞는 SQL로 변경 (`방언`을 바꿔도 JPQL을 바꿀 필요가 없음.)
 
@@ -65,7 +64,7 @@ Java Persistence Query Language
         <code>member.setId(id);</code>
         <code>member.setName("test");</code>
     </pre>
-- 영속 : `EntityManager`를 통해 .persistence(`Entity`)시 `Entity`가 `영속성 컨텍스트`에 관리되는 상태
+- 영속 : `EntityManager`를 통해 .persist(`Entity`)시 `Entity`가 `영속성 컨텍스트`에 관리되는 상태
     - <pre><code>entityManager.persist(member)</code></pre>
     - **영속 되었다고해서 DB에 쿼리가 날라가지 않는다. 즉, DB에 바로 저장되지 않는다.** <br>
     - **트랜잭션 commit시 `영속성 컨텍스트`에 있는(영속 되어있는) `Entity`가 DB에 저장이 된다.**
@@ -158,6 +157,7 @@ Java Persistence Query Language
 
 ### 플러시 (Flush)
 - `영속성 컨텍스트`의 변경 내용을 DB에 반영하여 `영속성 컨텍스트`와 DB를 동기화 하는 작업.
+- 트랜잭션 커밋이 일어나기전에 `플러시`가 동작함.
 - `플러시`를 하고 나서도 `영속성 컨텍스트`는 그대로 유지 된다.
 - `플러시` 동작
     1. 변경 감지를 수행
@@ -174,9 +174,10 @@ ex) <br>
 <pre>
     <code>entityManager.persist(member);</code>
     <code>entityManager.persist(otherMember);</code>
-    <code>// persist() 이후 중간에 JPQL 실행</code>
+    <code>// persist() 이후 커밋 되기전 중간 JPQL 실행</code>
     <code>List&lt;Member&gt; members = entityManager.createQuery("SELECT M FROM Member M", Member.class)
                                               .getResultList()</code>
+    <code>transaction.commit();</code>
 </pre>
 이런 경우에 트랜잭션 커밋 전이라 아직 DB에 접근하지 않았으므로, <br>
 persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발생한다.
@@ -260,7 +261,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 
     | 속성                 |      기능      |  기본값  |
     |---------------------|:--------------|:-------|
-    |name                 | 필드와 매핑할 테이블 컬럼의 이름 | 객체 필드 이 |
+    |name                 | 필드와 매핑할 테이블 컬럼의 이름 | 객체 필드 이름 |
     |insertable, updatable| 등록, 변경 가능 여부          |True   |
     |nullable             | DDL 기능, null값의 허용 여부 설정, false일 경우 not null 제약조건이 붙음|True    |
     |length               | DDL 기능, 문자 길이 제약 조건 | 255 |
@@ -288,8 +289,93 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     
 - **@Transient** : DB랑 관련없는 특정 필드를 매핑하고 싶지 않을때
 
+<br>
 
+### 기본 키 매핑
+- @Id : 직접 할당
+- @GeneratedValue : 자동 생성
 
+#### @GeneratedValue Strategy
+- AUTO : 기본 값, DB `방언`에 맞게 아래 3개 전략중 하나를 선택하여 자동 생성
+- IDENTITY : 기본 키 생성을 DB에게 위임, (Auto Increment)
+    - 주로 MySQL, PostgreSQL, SQL Server에서 사용
+    - IDENTITY 전략은 ID 값을 null로 DB에 던져 DB가 null로 INSERT 쿼리가 날라오면 그때 ID 값을 설정한다. <br>
+      그런데 JPA 특징은 트랜잭션 커밋시 DB에 접근하여 쿼리를 수행하는 것인데, <br>
+      이렇게 되면 커밋전까지는 ID 값을 null을 가지고 있게되어 `영속성 컨텍스트`에서 관리 할 수 없는 모순이 생긴다.
+      
+    - 즉, `영속성 컨텍스트`에서 관리 되려면 ID 값이 있어야 하는데 ID 값을 알 수 있는 시점이 DB에 들어가봐야 알 수 있어서 
+      트랜잭션 커밋 전까지 알 수 없는 문제점이 생겼다.
+    - **그렇기 때문에 JPA에서는 IDENTITY 전략만 예외로 .persist(`Entity`) 실행시 DB에 접근하여 바로 INSERT 쿼리를 날리고
+      내부적으로 JPA가 ID 값을 조회해서 `영속성 컨텍스트`에 저장하여 관리할 수 있도록 되어 있다.**
+    
+- SEQUENCE : DB에 SEQUENCE_OBJECT를 만들어 유일한 값을 순서대로 생성하여 사용
+    - 주로 Oracle, PostgreSQL에서 사용
+    - 자동으로 생성된 SEQUENCE_OBJECT의 이름은 데이테베이스 명을 따라간다. (ex. Hibernate_Sequence)
+    - 테이블 마다 SEQUENCE_OBJECT를 관리하려면 다음과 같이 설정한다.
+        <pre>
+            <code>@Entity</code>
+            <code>@SequenceGenerator(</code>
+            <code>      name = "MEMBER_SEQ_GENERATOR"</code>
+            <code>      ,sequenceName = "MEMBER_SEQ" // 매핑할 DB 시퀀스 이름</code>
+            <code>      ,initialValue = 1, allocateSize = 1 )</code>
+            <code>public class Member {</code>
+            <code>    @Id</code>
+            <code>    @GeneratedValue(strategy = GenerationType.SEQUENCE</code>
+            <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
+            <code>    private Long id;</code>
+        </pre>  
+    
+    - @SequenceGenerator
+    
+        | 속성              |      기능           |  기본값 |
+        |------------------|:-------------------|:-------|
+        |name              | 시퀀스 생성기 이름      |  |
+        |sequenceName      | DB에 등록된 시퀀스 이름  | hibername_sequence |
+        |initialValue      | DDL 생성시에만 사용됨, 초기값 | 1   |
+        |allocationSize    | 시퀀스 호출 시 증가하는       | 50  |
+    
+    - SEQUENCE 전략 또한 IDENTITY 전략과 비슷한 문제가 존재한다. <br>
+    ID 값을 DB에서 시퀀스로 생성되도록 위임한 전략이기 때문에 JPA가 ID 값을 알 수 있는 방법이 없기에
+    .persist(`Entity`) 수행시 시퀀스를 미리 조회 해서 `영속성 컨텍스트`에서 관리 한다.
+        <pre><code>call next value for MEMBER_SEQ</code></pre>
+    
+    <br>
+    
+    - 이렇게 시퀀스를 자주 조화할 경우 네트워크 접속이 불가피하여 allocationSize를 기본값 (50)으로 할 경우
+     내부적으로 .persist(`Entity`) 수행시 DB의 시퀀스를 50개를 증가시키고 갖고와 어플리케이션에서
+     50개를 내부적으로 갖고있어 순차적으로 증가시키는 방법을 사용한다. <br>
+     동시성 이슈 없이 사용이 가능 하다.
+    
+        | DB | MEMORY |
+        |----|:-------|
+        |1   | 1      |
+        |51  | 1      |
+        |51  | 2      | 
+        |51  | ....   |
+        |51  | 51     |
+        |101 | 51     |
+        |101 | 52     |
+        |101 | ....   |
+        
+    - 시퀀스를 증가 시킨후 ROLLBACK시 시퀀스는 ROLLBACK없이 숫자사이 구멍이 생긴채로 사용 된다.
+    
+- TABLE : 키 생성 전용 테이블을 하나 만들어서 시퀀스 흉내내는 전략
+    - 장점 : 어떤 DB는 Auto Increment, 어떤 DB는 시퀀스를 사용하기에 둘중 하나를 선택해야 하는데,
+            TABLE 전략은 위와 상관없이 모든 DB에 사용 가능
+    - 단점 : Lock 등의 성능 이슈
+    <pre>
+        <code>@Entity</code>
+        <code>@TableGenerator(</code>
+        <code>      name = "MEMBER_SEQ_GENERATOR"</code>
+        <code>      ,table = "MY_SEQENCES" // 시퀀스를 관리할 테이블 명</code>
+        <code>      ,pkColumnValue = "MEMBER_SEQ" // 시퀀스 컬럼</code>
+        <code>      ,allocateSize = 1 )</code>
+        <code>public class Member {</code>
+        <code>    @Id</code>
+        <code>    @GeneratedValue(strategy = GenerationType.TABLE</code>
+        <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
+        <code>    private Long id;</code>
+    </pre> 
 
 
 

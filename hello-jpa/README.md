@@ -211,6 +211,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 ----
 
 <br>
+<br>
 
 ### DB 스키마 생성
 - JPA는 어플리케이션 로딩 시점에 @Entity 어노테이션이 적용된 클래스들을 쭉 훑고나서 DB `방언`을 통해 적절한 DDL을 자동 생성 해주고 DB 테이블을 생성하는 기능을 제공 한다.
@@ -244,57 +245,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     </pre>
 
 <br>
-<br>
-<br>
 
-## 연관관계 매핑
-- `Entity`들은 대부분 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
-- 기존 테이블의 연관 관계 매핑은 `외래 키 식별자`를 통해 서로간의 연관 관계를 관리 하였다.
-- 객체 지향 설계의 목표는 자율적인 객체들의 협력 공동체를 만드는 것.
-- 객체를 테이블에 맞춰 데이터 중심(`외래 키 식별자`)으로 모델링을 하게 된다면 협력 관계를 만들 수 없다.
-    - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 다대일 관계일때
-    
-    <pre>
-        <code>Team team = new Team(); </code>
-        <code>team.setName("TeamA"); </code>
-        <code>em.persist(team); </code>
-        <code></code>
-        <code>Member member = new Member(); </code>
-        <code>member.setName("member1"); </code>
-        <code>member.setTeamId(team.getId()); </code>
-        <code>em.persist(member); </code>
-        <code></code>
-        <code>Member findMember = em.find(Member.class, member.getId();</code>
-        <code>Long findTeamId = findMember.getId();</code>
-        <code>Team findTeam = em.find(Team.class, findTeamId);</code>
-    </pre>
-    
-    - 위와 같이 테이블은 `외래 키 식별자`로 조인을 사용해서 연관된 테이블을 찾는다.
-    - 그러나 객체 지향 방식은 **참조**를 사용해서 연관된 객체를 찾기때문에 객체 지향적인 방법이 아니다.
-    
-    - JPA에서는 연관 관계에 있는 테이블의 PK를 멤버변수로 갖지 않고, **엔티티 객체 자체를 통째로 참조한다.**
-    <pre>
-        <code>Team team = new Team(); </code>
-        <code>team.setName("TeamA"); </code>
-        <code>em.persist(team); </code>
-        <code></code>
-        <code>Member member = new Member(); </code>
-        <code>member.setName("member1"); </code>
-        <code>member.setTeamId(team); </code>
-        <code>em.persist(member); </code>
-        <code></code>
-        <code>Member findMember = em.find(Member.class, member.getId();</code>
-        <code>Team findTeam = findMember.getTeam();</code>
-    </pre>
-    - 이와 같이 JPA에서는 **`Entity` 참조**와 **외래 키 매핑** 통해 연관 관계를 맺을 수 있다.
- 
-- 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
-- 양방향 관계 : 두 엔티티가 서로 참조 하는 것
-
-- 먼저 객체와 테이블 매핑하는 법을 살펴본 후, 연관 관계 설정하는 법을 알아본다.
-  
-<br>
- 
 ### 객체와 테이블 매핑
 - **@Entity** : 해당 어노테이션이 붙은 객체는 JPA가 관리, `Entity`라고 한다.
     - <u>기본 생성자 필수 (public or protected)</u>
@@ -429,13 +380,97 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    private Long id;</code>
     </pre> 
 
+
 <br>
+<br>
+<br>
+
+## 연관관계 매핑
+- 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
+- 양방향 관계 : 두 엔티티가 서로 참조 하는 것
+- `Entity`들은 대부분 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
+
+- 기존 테이블의 연관 관계 매핑은 `외래 키 식별자`를 통해 서로간의 연관 관계를 관리 하였다.
+- 객체 지향 설계의 목표는 자율적인 객체들의 협력 공동체를 만드는 것.
+- 객체를 테이블에 맞춰 데이터 중심(`외래 키 식별자`)으로 모델링을 하게 된다면 협력 관계를 만들 수 없다.
+    - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 다대일 관계일때
+    
+    <pre>
+        <code>Team team = new Team(); </code>
+        <code>team.setName("TeamA"); </code>
+        <code>em.persist(team); </code>
+        <code></code>
+        <code>Member member = new Member(); </code>
+        <code>member.setName("member1"); </code>
+        <code>member.setTeamId(team.getId()); </code>
+        <code>em.persist(member); </code>
+        <code></code>
+        <code>Member findMember = em.find(Member.class, member.getId();</code>
+        <code>Long findTeamId = findMember.getId();</code>
+        <code>Team findTeam = em.find(Team.class, findTeamId);</code>
+    </pre>
+    
+    - 위와 같이 테이블은 `외래 키 식별자`로 조인을 사용해서 연관된 테이블을 찾는다.
+    - 그러나 객체 지향 방식은 **참조**를 사용해서 연관된 객체를 찾기때문에 객체 지향적인 방법이 아니다.
+    - JPA에서는 연관 관계에 있는 테이블의 PK를 멤버변수로 갖지 않고, **`Entity` 객체 자체를 통째로 참조한다.**
+    
+    <pre>
+        <code>Team team = new Team(); </code>
+        <code>team.setName("TeamA"); </code>
+        <code>em.persist(team); </code>
+        <code></code>
+        <code>Member member = new Member(); </code>
+        <code>member.setName("member1"); </code>
+        <code>member.setTeamId(team); </code>
+        <code>em.persist(member); </code>
+        <code></code>
+        <code>Member findMember = em.find(Member.class, member.getId();</code>
+        <code>Team findTeam = findMember.getTeam();</code>
+    </pre>
+    
+    - JPA에서는 **`Entity` 참조**를 통해 연관 관계를 맺을 수 있다.
+  
+<br>
+
+### 객체와 테이블의 관계 차이
+- 테이블 연관 관계
+    - 회원 <-> 팀 양방향 1
+    - 테이블은 `외래 키 식별자` 하나로 두 테이블의 양방향 연관 관계를 가진다.
+    - 즉, 양쪽으로 조인이 가능하다.
+- 객체 연관 관계
+    - 회원 -> 팀 단방향 1개
+    - 팀 -> 회원 단방향 1개 
+    - **객체의 양방향 관계는 사실 서로 다른 단방향 관계가 2개가 존재하는 것이다.**
+- 만약 회원이 새로운 팀으로 바꿔야 할 경우, 
+    - 회원의 팀 값을 새로운 팀 값으로 변경되어야 하는지?
+    - 아니면 팀에 있는 회원들(members)의 값을 바꿔야 할지?
+
+- `Entity`를 양방향 연관 관계로 설정하면 객체의 참조는 둘인데 어떤 객체를 기준으로 `외래 키`를 설정해야 할지 딜레마가 발생한다.
+    - 회원에 있는 팀으로 `외래 키`를 관리 할지, 팀에 있는 회원들로 `외래 키`로 관리 할지
+- 즉, 두 객체 연관 관계 중 하나를 정해서 테이블의 `외래 키`를 관리해야 하는데 이것을 `주인`이라고 한다.
+
+<br>
+
+### 연관 관계의 주인 (Owner)
+- 양방향 매핑 규칙으로써, 객체의 두 관계중 하나를 연관 관계의 `주인`으로 지정
+- **`주인`만이 `외래 키`를 관리 (등록, 수정) 할 수 있다.**
+- `주인`은 `mappedBy` 속성 사용을 할 수 없다.
+
+- **`주인`이 아닌 쪽은 `외래 키`를 읽기만 가능 하다.**
+- `주인`이 아닌 쪽은 `mappedBy` 속성으로 `주인`을 지정 해야한다.
+
+- Who is Owner ?
+    - **`외래 키`가 있는 곳을 `주인`으로 정한다.**
+    - 통상 다대일 관계일때, 다 쪽에 연관 관계 `주인`으로 정하면 쉽다.
+    - 위에 예제로는 회원이 `주인`이 된다.
+
 <br>
 
 ### 단방향 연관 관계
 - `다대일 관계 (N : 1)`
     - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
-    - **회원 입장(`Entitiy` 자신을 기준으로)** 에서는 Many고 Team으로는 One이기 때문 `@ManyToOne` 어노테이션을 통해 매핑
+    - `@ManyToOne`
+    - **회원 입장(`Entity` 자신을 기준으로)** 에서는 다수고 Team으로는 One이기 때문 `@ManyToOne` 어노테이션을 통해 매핑
     - `외래 키 식별자`를 매핑하기 위해 `@JoinColumn` 어노테이션을 사용한다.
     - name 속성에는 매핑할 외래 키 컬럼명을 지정 한다.
     <pre>
@@ -446,6 +481,20 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    private Team team</code>
     </pre>
 
+### 양방향 연관 관계
+- 양쪽 `Entity`들을 서로 참조해서 관계를 맺을 수 있다.
+-`일대다 관계 (1 : N)`
+    - ex) 하나의 팀은 여러 회원을 가질때, 팀과 회원은 `일대다 관계 (1 : N)`일때
+    - `OneToMany`
+    - **팀 입장(`Entity` 자신을 기준으로)** 에서는 One이고 회원들은 다수이기 때문 `@OneToMany` 어노테이션을 통해 매핑
+    - mappedBy 속성을 통해 회원 테이블에서 어떤 필드의 레퍼런스와 관계가 있는지 매핑해줘야 한다.
+    - 여러 회원을 가질 수 있도록 회원 컬렉션을 필드로 가진다. + 동시에 초기화 해주도록 한다.
+    <pre>
+        <code>public class Team</code>
+        <code>    ...</code>
+        <code>    @OneToMany(mappedBy = "team")</code>
+        <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+    </pre>
    
 
 

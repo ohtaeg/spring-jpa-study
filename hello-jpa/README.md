@@ -242,10 +242,59 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>      @UniqueConstraint(name ="NAME_UNIQUE", columnNames = {"name"})</code>
         <code>})</code>
     </pre>
+
+<br>
+<br>
 <br>
 
 ## 연관관계 매핑
+- `Entity`들은 대부분 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
+- 기존 테이블의 연관 관계 매핑은 `외래 키 식별자`를 통해 서로간의 연관 관계를 관리 하였다.
+- 객체 지향 설계의 목표는 자율적인 객체들의 협력 공동체를 만드는 것.
+- 객체를 테이블에 맞춰 데이터 중심(`외래 키 식별자`)으로 모델링을 하게 된다면 협력 관계를 만들 수 없다.
+    - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 다대일 관계일때
+    
+    <pre>
+        <code>Team team = new Team(); </code>
+        <code>team.setName("TeamA"); </code>
+        <code>em.persist(team); </code>
+        <code></code>
+        <code>Member member = new Member(); </code>
+        <code>member.setName("member1"); </code>
+        <code>member.setTeamId(team.getId()); </code>
+        <code>em.persist(member); </code>
+        <code></code>
+        <code>Member findMember = em.find(Member.class, member.getId();</code>
+        <code>Long findTeamId = findMember.getId();</code>
+        <code>Team findTeam = em.find(Team.class, findTeamId);</code>
+    </pre>
+    
+    - 위와 같이 테이블은 `외래 키 식별자`로 조인을 사용해서 연관된 테이블을 찾는다.
+    - 그러나 객체 지향 방식은 **참조**를 사용해서 연관된 객체를 찾기때문에 객체 지향적인 방법이 아니다.
+    
+    - JPA에서는 연관 관계에 있는 테이블의 PK를 멤버변수로 갖지 않고, **엔티티 객체 자체를 통째로 참조한다.**
+    <pre>
+        <code>Team team = new Team(); </code>
+        <code>team.setName("TeamA"); </code>
+        <code>em.persist(team); </code>
+        <code></code>
+        <code>Member member = new Member(); </code>
+        <code>member.setName("member1"); </code>
+        <code>member.setTeamId(team); </code>
+        <code>em.persist(member); </code>
+        <code></code>
+        <code>Member findMember = em.find(Member.class, member.getId();</code>
+        <code>Team findTeam = findMember.getTeam();</code>
+    </pre>
+    - 이와 같이 JPA에서는 **`Entity` 참조**와 **외래 키 매핑** 통해 연관 관계를 맺을 수 있다.
+ 
+- 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
+- 양방향 관계 : 두 엔티티가 서로 참조 하는 것
 
+- 먼저 객체와 테이블 매핑하는 법을 살펴본 후, 연관 관계 설정하는 법을 알아본다.
+  
+<br>
+ 
 ### 객체와 테이블 매핑
 - **@Entity** : 해당 어노테이션이 붙은 객체는 JPA가 관리, `Entity`라고 한다.
     - <u>기본 생성자 필수 (public or protected)</u>
@@ -380,8 +429,24 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    private Long id;</code>
     </pre> 
 
+<br>
+<br>
 
+### 단방향 연관 관계
+- `다대일 관계 (N : 1)`
+    - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
+    - **회원 입장(`Entitiy` 자신을 기준으로)** 에서는 Many고 Team으로는 One이기 때문 `@ManyToOne` 어노테이션을 통해 매핑
+    - `외래 키 식별자`를 매핑하기 위해 `@JoinColumn` 어노테이션을 사용한다.
+    - name 속성에는 매핑할 외래 키 컬럼명을 지정 한다.
+    <pre>
+        <code>public class Member</code>
+        <code>    ...</code>
+        <code>    @ManyToOne</code>
+        <code>    @JoinColumn(name = "TEAM_ID)"</code>
+        <code>    private Team team</code>
+    </pre>
 
+   
 
 
 

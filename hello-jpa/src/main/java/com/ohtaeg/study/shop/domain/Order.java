@@ -2,6 +2,7 @@ package com.ohtaeg.study.shop.domain;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "ORDERS")
@@ -15,10 +16,18 @@ public class Order {
     @JoinColumn(name = "MEMBER_ID")
     private Member member;
 
+    @OneToMany(mappedBy = "order")
+    private List<OrderItem> orderItems;
+
     private LocalDateTime orderTime;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
+    public void addOrderItem(final OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.setOrder(this);
+    }
 
     public Long getId() {
         return id;

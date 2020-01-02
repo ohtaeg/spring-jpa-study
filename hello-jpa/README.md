@@ -453,6 +453,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 
 ### 연관 관계의 주인 (Owner)
 - 양방향 매핑 규칙으로써, 객체의 두 관계중 하나를 연관 관계의 `주인`으로 지정
+- 비지니스 로직 기준이 아닌 **외래키 위치 기준**으로 `주인`을 지정해야 한다.
 - **`주인`만이 `외래 키`를 관리 (등록, 수정) 할 수 있다.**
 - `주인`은 `mappedBy` 속성 사용을 할 수 없다.
 
@@ -483,11 +484,13 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 
 ### 양방향 연관 관계
 - 양쪽 `Entity`들을 서로 참조해서 관계를 맺을 수 있다.
+- 단방향 매핑만으로도 이미 양방향 연관 관계 매핑은 완료. **JPA 설계시 단방향 연관 관계 매핑으로 우선시 한다.**
+- JPQL에서 역방향으로 탐색할일이 많음. 그럴때마다 양방향을 추가하면 된다.
 -`일대다 관계 (1 : N)`
     - ex) 하나의 팀은 여러 회원을 가질때, 팀과 회원은 `일대다 관계 (1 : N)`일때
     - `OneToMany`
     - **팀 입장(`Entity` 자신을 기준으로)** 에서는 One이고 회원들은 다수이기 때문 `@OneToMany` 어노테이션을 통해 매핑
-    - mappedBy 속성을 통해 회원 테이블에서 어떤 필드의 레퍼런스와 관계가 있는지 매핑해줘야 한다.
+    - `mappedBy` 속성을 통해 회원 테이블(`주인`) 쪽과 어떤 필드가 관계가 있는지 매핑해줘야 한다.
     - 여러 회원을 가질 수 있도록 회원 컬렉션을 필드로 가진다. + 동시에 초기화 해주도록 한다.
     <pre>
         <code>public class Team</code>
@@ -495,11 +498,69 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    @OneToMany(mappedBy = "team")</code>
         <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
     </pre>
-   
 
-
-
-
+ 
+- 양방향 매핑시 가장 많이 하는 실수
+    - 연관 관계 `주인`에다가 값을 입력하지 않고 `주인`이 아닌곳에 값을 넣는다.
+        <pre>
+            <code></code>
+            <code>Member member = new Member(); </code>
+            <code>member.setName("member1"); </code>
+            <code>em.persist(member); </code>
+            <code></code>
+            <code>Team team = new Team(); </code>
+            <code>team.setName("TeamA"); </code>
+            <code>team.getMembers().add(member); // 역방향에만 연관 관계 설정하는 실수 조심</code>
+            <code>em.persist(team); </code>
+        </pre>
+    
+    - `mappedBy`속성은 읽기만 가능하고 JPA에서는 insert나 변경시 쳐다도 보지 않기때문에 값을 넣을 필요가 없다.
+    - `주인`에 값을 넣고 역방향에도 넣어준다.
+        <pre>
+            <code>Team team = new Team(); </code>
+            <code>team.setName("TeamA"); </code>
+            <code>em.persist(team); </code>
+            <code></code>
+            <code>Member member = new Member(); </code>
+            <code>member.setName("member1"); </code>
+            <code>member.setTeam(team); // 주인에 값 설정 OK!</code>
+            <code>em.persist(member); </code>
+            <code>team.getMembers().add(member); // OK!</code>
+        </pre>
+    
+    - 역방향에도 넣어줘야 하는 이유는 아래 코드와 같이 해버리면 team `Entity`가 members에 값이 없는 상태로 `1차 캐시`에 등록되어 <br>
+      커밋 전이라 .find(DB 조회)를 해도 members를 갖고올 수 없음. <br>
+      그렇기에 .find(DB 조회)전에 `flush` + clear를 하여 `1차 캐시`를 비워 재조회 하도록 하거나 **역방향에 넣어준다.** <br>
+      **항상 양쪽에 값을 설정하자**
+        <pre>
+            <code>Team team = new Team(); </code>
+            <code>team.setName("TeamA"); </code>
+            <code>em.persist(team); </code>
+            <code></code>
+            <code>Member member = new Member(); </code>
+            <code>member.setName("member1"); </code>
+            <code>member.setTeam(team); // 주인에 값 설정 OK!</code>
+            <code>em.persist(member); </code>
+            <code>Team findTeam = em.find(Team.class, team.getId();</code>
+            <code>List&lt;Member&gt; members = findTeam.getMembers(); // size 0 !</code>
+        </pre>
+    - 또는 `주인`쪽 or 역방향에다가 연관 관계 편의 메서드를 생성하자.
+        <pre>
+            <code>public class Member</code>
+            <code>    ...</code>
+            <code>    @ManyToOne</code>
+            <code>    @JoinColumn(name = "TEAM_ID)"</code>
+            <code>    private Team team</code>
+            <code>    public void changeTeam(Team team) {</code>
+            <code>        this.team = team;</code>
+            <code>        this.team.getMembers().add(this);</code>
+            <code>    }</code>
+        </pre>
+    - 양방향 매핑시 무한루프를 조심하자.
+        - toString()이 양쪽으로 오버라이드 되어있으면 무한호출 된다. (양쪽 객체를 필드로 가지고 있기 때문)
+        - JSON 생성 라이브러리를 조심하자. **컨트롤러에서 절대 엔티티를 바로 반환하지 말자.**
+            - 엔티티를 바로 반환해버리면 JSON 생성 라이브러리로 인해 toString()이 호출된다.
+            - 엔티티 대신 DTO로 반환하자.
 
 
 

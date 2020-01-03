@@ -327,6 +327,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>    @GeneratedValue(strategy = GenerationType.SEQUENCE</code>
             <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
             <code>    private Long id;</code>
+            <code>}</code>
         </pre>  
     
     - @SequenceGenerator
@@ -378,6 +379,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    @GeneratedValue(strategy = GenerationType.TABLE</code>
         <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
         <code>    private Long id;</code>
+        <code>}</code>
     </pre> 
 
 
@@ -479,11 +481,12 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     - `외래 키 식별자`를 매핑하기 위해 `@JoinColumn` 어노테이션을 사용한다.
     - name 속성에는 매핑할 외래 키 컬럼명을 지정 한다.
     <pre>
-        <code>public class Member</code>
+        <code>public class Member {</code>
         <code>    ...</code>
         <code>    @ManyToOne</code>
         <code>    @JoinColumn(name = "TEAM_ID)"</code>
         <code>    private Team team</code>
+        <code>}</code>
     </pre>
     
 <br>
@@ -493,11 +496,12 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     - 문제는 테이블 일대다 관계는 항상 다(N)쪽에 `외래 키`가 있다. 
     - 테이블과 객체 패러다임 차이로 인해 `주인` 반대편에서 `외래키`를 관리하는 특이성이 생겼다.
     <pre>
-        <code>public class Team</code>
+        <code>public class Team {</code>
         <code>    ...</code>
         <code>    @OneToMany</code>
         <code>    @JoinColumn(name = "TEAM_ID")</code>
         <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+        <code>}</code>
     </pre>
     
     - 일(1) `Entity`에 @JoinColumn을 꼭 사용해야 한다. 그렇지 않으면 조인테이블(중간 테이블)이 생긴다.
@@ -526,17 +530,18 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 - 양쪽 `Entity`들을 서로 참조해서 관계를 맺을 수 있다.
 - 단방향 매핑만으로도 이미 양방향 연관 관계 매핑은 완료. **JPA 설계시 단방향 연관 관계 매핑으로 우선시 한다.**
 - JPQL에서 역방향으로 탐색할일이 많음. 그럴때마다 양방향을 추가하면 된다.
--`다대일 관계 (N : 1)`
+- `다대일 관계 (N : 1)`
     - ex) 여러 회원은 하나의 팀에만 소속되고 하나의 팀은 여러 회원을 가질때,
     - `OneToMany`
     - **팀 입장(`Entity` 자신을 기준으로)** 에서는 One이고 회원들은 다수이기 때문 `@OneToMany` 어노테이션을 통해 매핑
     - `mappedBy` 속성을 통해 회원 테이블(`주인`) 쪽의 어떤 필드와 관계가 있는지 매핑해줘야 한다.
     - 여러 회원을 가질 수 있도록 회원 컬렉션을 필드로 가진다. + 동시에 초기화 해주도록 한다.
     <pre>
-        <code>public class Team</code>
+        <code>public class Team {</code>
         <code>    ...</code>
         <code>    @OneToMany(mappedBy = "team")</code>
         <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+        <code>}</code>
     </pre>
 
  
@@ -588,7 +593,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         
     - 또는 `주인`쪽 or 역방향에다가 연관 관계 편의 메서드를 생성하자.
         <pre>
-            <code>public class Member</code>
+            <code>public class Member {</code>
             <code>    ...</code>
             <code>    @ManyToOne</code>
             <code>    @JoinColumn(name = "TEAM_ID)"</code>
@@ -597,6 +602,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>        this.team = team;</code>
             <code>        this.team.getMembers().add(this);</code>
             <code>    }</code>
+            <code>}</code>
         </pre>
         
     - 양방향 매핑시 무한루프를 조심하자.
@@ -621,8 +627,58 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 - `외래 키`에 DB UNIQUE 제약 조건을 추가해야 1:1 관계가 성립된다.
 - 명확한 1:1 관계라면 주 테이블에 `외래 키`를 권장 한다.
     - 주 테이블은 주로 실무에서 사용하고 있으므로 미리 조회되어 있는 상태라 조금이나마 성능 이슈가 있다.
-    
-### @ManyToOne에 mappedBy 속성이 없는 이유
+
+
+### N:M 관계
+- RDB는 다대다 관계를 표현할 수 없다.
+- 다만 객체는 컬렉션을 사용해서 객체 2개로 다대다 관계가 가능하다.
+- 중간테이블(조인테이블)을 추가해서 다대일 or 일대다 관계로 풀어내야 한다.
+- JPA는 객체는 되고 테이블은 안되기 때문에 @ManyToMany를 지원한다.
+- 회원은 여러 상품을 가질 수 있고, 여러명의 회원에 상품이 포함될 수 있을때,
+    <pre>
+        <code>public class Member {</code>
+        <code>    ...</code>
+        <code>    @ManyToMany</code>
+        <code>    @JoinTable(name = "MEMBER_PRODUCT")</code>
+        <code>    List&lt;Product&gt; products = new ArrayList&lt;&gt;();</code>
+        <code>}</code>
+    </pre>
+    - 각 테이블의 PK들이 중간테이블에는 FK 되는 구조
+    - 현재는 단방향인데 양방향으로 하려면
+     <pre>
+         <code>public class Product {</code>
+         <code>    ...</code>
+         <code>    @ManyToMany(mappedBy = "products")</code>
+         <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+         <code>}</code>
+     </pre>   
+- 실무에서 사용 X, 중간 테이블에 컬럼 추가가 불가능.   
+
+#### 다대다 대체
+- 연결 테이블용 `Entity` 추가 (연결 테이블을 `Entity`로 승격)
+- @ManyToMany -> @OneToMany, @ManyToOne
+    <pre>
+        <code>public class MemberProduct {</code>
+        <code>    @Id</code> 
+        <code>    Long id; // 각 FK를 PK로 가지는것보다 별도로 PK를 관리하는것을 선호하자.</code> 
+        <code>    @ManyToOne</code>
+        <code>    @JoinColumn(name = "MEMBER_ID")</code>
+        <code>    Member member;</code>
+        <code>    @ManyToOne</code>
+        <code>    @JoinColumn(name = "PRODUCT_ID")</code>
+        <code>    Product product;</code>
+        <code>    ...</code>
+        <code>}</code>
+        <code></code>
+        <code>public class Member {</code>
+        <code>    @OneToMany(mappedBy = "member")</code>
+        <code>    List&lt;MemberProduct&gt; memberProducts = new ArrayList&lt;&gt;();</code>
+        <code>    ...</code>
+        <code>}</code>
+    </pre>
+
+
+##### @ManyToOne에 mappedBy 속성이 없는 이유
 - mappedBy 스펙을 양쪽 연관 관계에다가 풀게되면 JPA는 개발자에게 잘못된 관계를 맺도록 <br>
   선택의 여지를 열어주게 되어 혼란만 가중시키기 때문에
     

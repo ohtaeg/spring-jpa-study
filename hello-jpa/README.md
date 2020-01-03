@@ -127,7 +127,7 @@ Java Persistence Query Language
 
 <br>
 
-### 트랜잭션을 지원하는 쓰기 지연 ( Transactionl Write-Behind )
+### 트랜잭션을 지원하는 쓰기 지연 ( Transactional Write-Behind )
 <pre>
     <code>EntityManager.persist(member);</code>
     <code>EntityManager.persist(otherMember);</code>
@@ -388,8 +388,11 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 ## 연관관계 매핑
 - 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
 - 양방향 관계 : 두 엔티티가 서로 참조 하는 것
-- `Entity`들은 대부분 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
-
+- `Entity`들은 대부분 다음중 하나의 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
+    - 다대일 (N : 1) : @ManyToOne
+    - 일대다 (1 : N) : @OneToMany
+    - 일대일 (1 : 1) : @OneToOne
+    - ~~다대다 (N : M) : @ManyToMany~~
 - 기존 테이블의 연관 관계 매핑은 `외래 키 식별자`를 통해 서로간의 연관 관계를 관리 하였다.
 - 객체 지향 설계의 목표는 자율적인 객체들의 협력 공동체를 만드는 것.
 - 객체를 테이블에 맞춰 데이터 중심(`외래 키 식별자`)으로 모델링을 하게 된다면 협력 관계를 만들 수 없다.
@@ -440,6 +443,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 - 객체 연관 관계
     - 회원 -> 팀 단방향 1개
     - 팀 -> 회원 단방향 1개 
+    - 참조용 필드가 있는 쪽으로만 참조 가능
     - **객체의 양방향 관계는 사실 서로 다른 단방향 관계가 2개가 존재하는 것이다.**
 - 만약 회원이 새로운 팀으로 바꿔야 할 경우, 
     - 회원의 팀 값을 새로운 팀 값으로 변경되어야 하는지?
@@ -469,7 +473,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 
 ### 단방향 연관 관계
 - `다대일 관계 (N : 1)`
-    - ex) 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
+    - ex) 여러 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
     - `@ManyToOne`
     - **회원 입장(`Entity` 자신을 기준으로)** 에서는 다수고 Team으로는 One이기 때문 `@ManyToOne` 어노테이션을 통해 매핑
     - `외래 키 식별자`를 매핑하기 위해 `@JoinColumn` 어노테이션을 사용한다.
@@ -481,16 +485,52 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    @JoinColumn(name = "TEAM_ID)"</code>
         <code>    private Team team</code>
     </pre>
+    
+<br>
+
+- `일대다 관계 (1 : N)`
+    - `일대다 단방향`은 일(1)이 연관 관계의 `주인`이다.
+    - 문제는 테이블 일대다 관계는 항상 다(N)쪽에 `외래 키`가 있다. 
+    - 테이블과 객체 패러다임 차이로 인해 `주인` 반대편에서 `외래키`를 관리하는 특이성이 생겼다.
+    <pre>
+        <code>public class Team</code>
+        <code>    ...</code>
+        <code>    @OneToMany</code>
+        <code>    @JoinColumn(name = "TEAM_ID")</code>
+        <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+    </pre>
+    
+    - 일(1) `Entity`에 @JoinColumn을 꼭 사용해야 한다. 그렇지 않으면 조인테이블(중간 테이블)이 생긴다.
+    <pre>
+        <code>create table Team_Member ( ... )</code>
+    </pre>
+    
+    - 팀의 members값이 변경되면 회원의 teamId (`외래키`)를 변경해주어야 한다.
+    - 즉, 연관 관계 관리를 위해 추가로 옆 테이블의 update sql을 실행한다.
+    - 실무에서 지양하는 연관 관계 (테이블이 수십개가 엮어서 진행할 경우 외래키가 있는 테이블이 update 되므로 조심해야함)
+    - 일대다 단방향 매핑보다 다대일 양방향 연관 관계를 맺는 방식을 더 선호.
+    <pre>
+        <code>Member member = new Member(); </code>
+        <code>member.setName("member1"); </code>
+        <code>em.persist(member); </code>
+        <code></code>
+        <code>Team team = new Team(); </code>
+        <code>team.setName("TeamA"); </code>
+        <code>team.getMembers().add(member); // MEMBER 테이블에 있는 TEAM_ID 외래키 update가 된다.</code>
+        <code>em.persist(team); </code>
+    </pre>
+
+<br>
 
 ### 양방향 연관 관계
 - 양쪽 `Entity`들을 서로 참조해서 관계를 맺을 수 있다.
 - 단방향 매핑만으로도 이미 양방향 연관 관계 매핑은 완료. **JPA 설계시 단방향 연관 관계 매핑으로 우선시 한다.**
 - JPQL에서 역방향으로 탐색할일이 많음. 그럴때마다 양방향을 추가하면 된다.
--`일대다 관계 (1 : N)`
-    - ex) 하나의 팀은 여러 회원을 가질때, 팀과 회원은 `일대다 관계 (1 : N)`일때
+-`다대일 관계 (N : 1)`
+    - ex) 여러 회원은 하나의 팀에만 소속되고 하나의 팀은 여러 회원을 가질때,
     - `OneToMany`
     - **팀 입장(`Entity` 자신을 기준으로)** 에서는 One이고 회원들은 다수이기 때문 `@OneToMany` 어노테이션을 통해 매핑
-    - `mappedBy` 속성을 통해 회원 테이블(`주인`) 쪽과 어떤 필드가 관계가 있는지 매핑해줘야 한다.
+    - `mappedBy` 속성을 통해 회원 테이블(`주인`) 쪽의 어떤 필드와 관계가 있는지 매핑해줘야 한다.
     - 여러 회원을 가질 수 있도록 회원 컬렉션을 필드로 가진다. + 동시에 초기화 해주도록 한다.
     <pre>
         <code>public class Team</code>
@@ -514,7 +554,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>em.persist(team); </code>
         </pre>
     
-    - `mappedBy`속성은 읽기만 가능하고 JPA에서는 insert나 변경시 쳐다도 보지 않기때문에 값을 넣을 필요가 없다.
+    - `mappedBy`속성은 읽기만 가능하고 JPA에서는 INSERT나 변경시 쳐다도 보지 않기 때문에 값을 넣을 필요가 없다.
     - `주인`에 값을 넣고 역방향에도 넣어준다.
         <pre>
             <code>Team team = new Team(); </code>
@@ -525,25 +565,27 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>member.setName("member1"); </code>
             <code>member.setTeam(team); // 주인에 값 설정 OK!</code>
             <code>em.persist(member); </code>
-            <code>team.getMembers().add(member); // OK!</code>
+            <code>team.getMembers().add(member); // 역방향 OK!</code>
         </pre>
     
-    - 역방향에도 넣어줘야 하는 이유는 아래 코드와 같이 해버리면 team `Entity`가 members에 값이 없는 상태로 `1차 캐시`에 등록되어 <br>
-      커밋 전이라 .find(DB 조회)를 해도 members를 갖고올 수 없음. <br>
+    - 역방향에도 넣어줘야 하는 이유는 아래 코드와 같이 해버리면 team `Entity`가 members에 값이 없는 상태로 <br>
+      `1차 캐시`에 등록되어 커밋 전이라 .find(DB 조회)를 해도 members를 갖고올 수 없음. <br>
+      <pre>
+          <code>Team team = new Team(); </code>
+          <code>team.setName("TeamA"); </code>
+          <code>em.persist(team); </code>
+          <code></code>
+          <code>Member member = new Member(); </code>
+          <code>member.setName("member1"); </code>
+          <code>member.setTeam(team); // 주인에 값 설정 OK!</code>
+          <code>em.persist(member); </code>
+          <code>Team findTeam = em.find(Team.class, team.getId();</code>
+          <code>List&lt;Member&gt; members = findTeam.getMembers(); // size 0 !</code>
+      </pre>
+      
       그렇기에 .find(DB 조회)전에 `flush` + clear를 하여 `1차 캐시`를 비워 재조회 하도록 하거나 **역방향에 넣어준다.** <br>
-      **항상 양쪽에 값을 설정하자**
-        <pre>
-            <code>Team team = new Team(); </code>
-            <code>team.setName("TeamA"); </code>
-            <code>em.persist(team); </code>
-            <code></code>
-            <code>Member member = new Member(); </code>
-            <code>member.setName("member1"); </code>
-            <code>member.setTeam(team); // 주인에 값 설정 OK!</code>
-            <code>em.persist(member); </code>
-            <code>Team findTeam = em.find(Team.class, team.getId();</code>
-            <code>List&lt;Member&gt; members = findTeam.getMembers(); // size 0 !</code>
-        </pre>
+      **항상 양쪽에 값을 설정하는 습관을 들이자.**
+        
     - 또는 `주인`쪽 or 역방향에다가 연관 관계 편의 메서드를 생성하자.
         <pre>
             <code>public class Member</code>
@@ -556,11 +598,32 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>        this.team.getMembers().add(this);</code>
             <code>    }</code>
         </pre>
+        
     - 양방향 매핑시 무한루프를 조심하자.
         - toString()이 양쪽으로 오버라이드 되어있으면 무한호출 된다. (양쪽 객체를 필드로 가지고 있기 때문)
-        - JSON 생성 라이브러리를 조심하자. **컨트롤러에서 절대 엔티티를 바로 반환하지 말자.**
-            - 엔티티를 바로 반환해버리면 JSON 생성 라이브러리로 인해 toString()이 호출된다.
-            - 엔티티 대신 DTO로 반환하자.
+        - JSON 생성 라이브러리를 조심하자. **컨트롤러에서 절대 `Entity`를 바로 반환하지 말자.**
+            - `Entity`를 바로 반환해버리면 JSON 생성 라이브러리로 인해 toString()이 호출된다.
+            - `Entity` 대신 DTO로 반환하자.
 
-
-
+### 1:1 관계
+- @OneToOne
+- `주인`으로 주 테이블이나 대상 테이블 중에 선택
+    - 즉, 둘중 한군데만 넣으면 된다.
+    - 주 테이블에 `외래 키`
+        - 다대일 단방향(@ManyToOne)과 유사하다.
+        - `주인`은 @JoinColumn은 필수로 붙여준다. `주인` 반대는 mappedBy를 붙여준다.
+        - 장점은 주 테이블만 조회해도 대상 테이블에 데이터가 있는지 확인 가능
+        - 단점은 : 값이 없으면 외래키에 null을 허용해야 한다.
+    - 대상 테이블에 `외래 키`
+        - 주 테이블에 `외래 키` 방법과 비슷하다.
+        - 장점 : 1:1 -> 1:N으로 변경될 경우 테이블 구조를 유지할 수 있다.
+        - 단점 : `프록시`의 한계로 인해 지연 로딩으로 설정해도 항상 즉시 로딩이 된다.
+- `외래 키`에 DB UNIQUE 제약 조건을 추가해야 1:1 관계가 성립된다.
+- 명확한 1:1 관계라면 주 테이블에 `외래 키`를 권장 한다.
+    - 주 테이블은 주로 실무에서 사용하고 있으므로 미리 조회되어 있는 상태라 조금이나마 성능 이슈가 있다.
+    
+### @ManyToOne에 mappedBy 속성이 없는 이유
+- mappedBy 스펙을 양쪽 연관 관계에다가 풀게되면 JPA는 개발자에게 잘못된 관계를 맺도록 <br>
+  선택의 여지를 열어주게 되어 혼란만 가중시키기 때문에
+    
+    

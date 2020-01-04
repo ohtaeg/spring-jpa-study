@@ -7,6 +7,8 @@
         <class>com.ohtaeg.study.shop.domain.Item</class>
         <class>com.ohtaeg.study.shop.domain.OrderItem</class>
         <class>com.ohtaeg.study.shop.domain.Order</class>
+        <class>com.ohtaeg.study.shop.domain.Category</class>
+        <class>com.ohtaeg.study.shop.domain.Delivery</class>
 
         <properties>
             <!-- 필수 속성 -->
@@ -21,7 +23,7 @@
             <property name="hibernate.format_sql" value="true"/>        <!-- 출력 되는 쿼리 포맷팅 -->
             <property name="hibernate.use_sql_comments" value="true"/>  <!-- 쿼리 출력시 쿼리가 실행된 이유를 주석으로 추가 -->
             <property name="hibernate.jdbc.batch_size" value="10"/>     <!-- 쓰기 지연시, 최대 갯수 설정 -->
-            <property name="hibernate.hbm2ddl.auto" value="create-drop" />   <!-- DDL 자동 생성 설정 -->
+            <property name="hibernate.hbm2ddl.auto" value="create" />   <!-- DDL 자동 생성 설정 -->
         </properties>
     </persistence-unit>
 </persistence>

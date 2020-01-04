@@ -12,7 +12,9 @@ JPA 입문 공부를 위한 프로젝트
     - 회원은 여러 번 주문할 수 있다.
 - 주문 시 여러 종류의 상품을 선택할 수 있다.
     - 같은 상품도 여러번 주문될 수 있다.
-
+- 주문시 배송을 할 수 있다.
+- 하나의 상품은 여러 카테고리에 속할 수 있다.
+ 
 <br>
 
 ## I learn
@@ -272,6 +274,15 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
     |columnDefinition     | DDL 기능, 문자열로 직접 컬럼정보 설정 가능.(필드 크기, 디폴트값 등등)| |
     |scale                | DDL 기능, 소수의 자릿수, double, float 타입에는 적용이 안된다. 주로 BigDecimal에 사용| 2 | 
     |precision            | 소숫점을 포함한 전체 자릿 수, 주로 BigDecimal이나 BigInteger에 사용| 19 |
+  
+- **@JoinColumn**
+
+    | 속성                |      기능                |  기본값 |
+    |--------------------|:------------------------|:-------|
+    |name                |매핑할 외래키 이름            | 필드명 + '_' + 참조하는 테이블의 기본키 컬럼명 |
+    |referencedColumnName|외래키가 참조하는 테이블의 컬럼명 | 참조하는 테이블의 기본키 컬럼명 |
+    |foreignKey (DDL)    |외래키 제약 조건              |    |
+   
     
 - **@Enumerated** : Enum 타입 매핑
     - EnumType.ORDINAL : enum의 순서를 DB에 저장, 사용하지 말것.
@@ -321,11 +332,11 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             <code>@SequenceGenerator(</code>
             <code>      name = "MEMBER_SEQ_GENERATOR"</code>
             <code>      ,sequenceName = "MEMBER_SEQ" // 매핑할 DB 시퀀스 이름</code>
-            <code>      ,initialValue = 1, allocateSize = 1 )</code>
+            <code>      ,initialValue = 1, allocationSize = 1 )</code>
             <code>public class Member {</code>
             <code>    @Id</code>
             <code>    @GeneratedValue(strategy = GenerationType.SEQUENCE</code>
-            <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
+            <code>                   ,generator = "MEMBER_SEQ_GENERATOR")</code>
             <code>    private Long id;</code>
             <code>}</code>
         </pre>  
@@ -373,11 +384,11 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>      name = "MEMBER_SEQ_GENERATOR"</code>
         <code>      ,table = "MY_SEQENCES" // 시퀀스를 관리할 테이블 명</code>
         <code>      ,pkColumnValue = "MEMBER_SEQ" // 시퀀스 컬럼</code>
-        <code>      ,allocateSize = 1 )</code>
+        <code>      ,allocationSize = 1 )</code>
         <code>public class Member {</code>
         <code>    @Id</code>
         <code>    @GeneratedValue(strategy = GenerationType.TABLE</code>
-        <code>                   ,generator = "MEMBER_SEQ_GENERATOR"</code>
+        <code>                   ,generator = "MEMBER_SEQ_GENERATOR")</code>
         <code>    private Long id;</code>
         <code>}</code>
     </pre> 
@@ -390,6 +401,9 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 ## 연관관계 매핑
 - 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
 - 양방향 관계 : 두 엔티티가 서로 참조 하는 것
+- 데이터 모델링은 관계를 맺으면 양방향 관계로 자동 매핑이 되지만 <br>
+  객체지향 모델링은 어떤 엔티티가 중심이냐에 따라 단방향인지, 양방향인지 선택 해야 한다.
+  
 - `Entity`들은 대부분 다음중 하나의 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
     - 다대일 (N : 1) : @ManyToOne
     - 일대다 (1 : N) : @OneToMany
@@ -474,9 +488,17 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 <br>
 
 ### 단방향 연관 관계
+- 한쪽의 `Entity`가 상 `Entity`를 참조하는 것을 말한다.
 - `다대일 관계 (N : 1)`
     - ex) 여러 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
     - `@ManyToOne`
+        
+        | 속성              |      기능           |  기본값 |
+        |------------------|:-------------------|:-------|
+        |optional          | false로 설정하면 연관된 엔티티는 항상 존재해야함 | true |
+        |fetch             | 글로벌 페치 전략 설장한다.  | 즉시 로딩 |
+        |cascade           | 영속성 전이 기능을 사용한다. |   |
+                
     - **회원 입장(`Entity` 자신을 기준으로)** 에서는 다수고 Team으로는 One이기 때문 `@ManyToOne` 어노테이션을 통해 매핑
     - `외래 키 식별자`를 매핑하기 위해 `@JoinColumn` 어노테이션을 사용한다.
     - name 속성에는 매핑할 외래 키 컬럼명을 지정 한다.
@@ -488,42 +510,8 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    private Team team</code>
         <code>}</code>
     </pre>
-    
-<br>
-
-- `일대다 관계 (1 : N)`
-    - `일대다 단방향`은 일(1)이 연관 관계의 `주인`이다.
-    - 문제는 테이블 일대다 관계는 항상 다(N)쪽에 `외래 키`가 있다. 
-    - 테이블과 객체 패러다임 차이로 인해 `주인` 반대편에서 `외래키`를 관리하는 특이성이 생겼다.
-    <pre>
-        <code>public class Team {</code>
-        <code>    ...</code>
-        <code>    @OneToMany</code>
-        <code>    @JoinColumn(name = "TEAM_ID")</code>
-        <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
-        <code>}</code>
-    </pre>
-    
-    - 일(1) `Entity`에 @JoinColumn을 꼭 사용해야 한다. 그렇지 않으면 조인테이블(중간 테이블)이 생긴다.
-    <pre>
-        <code>create table Team_Member ( ... )</code>
-    </pre>
-    
-    - 팀의 members값이 변경되면 회원의 teamId (`외래키`)를 변경해주어야 한다.
-    - 즉, 연관 관계 관리를 위해 추가로 옆 테이블의 update sql을 실행한다.
-    - 실무에서 지양하는 연관 관계 (테이블이 수십개가 엮어서 진행할 경우 외래키가 있는 테이블이 update 되므로 조심해야함)
-    - 일대다 단방향 매핑보다 다대일 양방향 연관 관계를 맺는 방식을 더 선호.
-    <pre>
-        <code>Member member = new Member(); </code>
-        <code>member.setName("member1"); </code>
-        <code>em.persist(member); </code>
-        <code></code>
-        <code>Team team = new Team(); </code>
-        <code>team.setName("TeamA"); </code>
-        <code>team.getMembers().add(member); // MEMBER 테이블에 있는 TEAM_ID 외래키 update가 된다.</code>
-        <code>em.persist(team); </code>
-    </pre>
-
+    - 단방향 관계를 맺었으므로 외래키가 생겼기 때문에 현재 회원은 팀의 정보를 갖고 올 수 있게 되었다.
+    - 팀에서 회원 정보를 갖고 오려면 ?   양방향 연관 관계를 맺어야 한다.  
 <br>
 
 ### 양방향 연관 관계
@@ -533,6 +521,13 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 - `다대일 관계 (N : 1)`
     - ex) 여러 회원은 하나의 팀에만 소속되고 하나의 팀은 여러 회원을 가질때,
     - `OneToMany`
+        
+        | 속성              |      기능           |  기본값 |
+        |------------------|:-------------------|:-------|
+        |mappedBy          | 연관 관계의 주인 필드를 선택한다. |  |
+        |fetch             | 글로벌 페치 전략 설장한다.  | 즉시 로딩 |
+        |cascade           | 영속성 전이 기능을 사용한다. |   |
+    
     - **팀 입장(`Entity` 자신을 기준으로)** 에서는 One이고 회원들은 다수이기 때문 `@OneToMany` 어노테이션을 통해 매핑
     - `mappedBy` 속성을 통해 회원 테이블(`주인`) 쪽의 어떤 필드와 관계가 있는지 매핑해줘야 한다.
     - 여러 회원을 가질 수 있도록 회원 컬렉션을 필드로 가진다. + 동시에 초기화 해주도록 한다.
@@ -541,6 +536,15 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>    ...</code>
         <code>    @OneToMany(mappedBy = "team")</code>
         <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+        <code>}</code>
+    </pre>
+    
+    <pre>
+        <code>public class Member {</code>
+        <code>    ...</code>
+        <code>    @ManyToOne</code>
+        <code>    @JoinColumn(name = "TEAM_ID)"</code>
+        <code>    private Team team</code>
         <code>}</code>
     </pre>
 
@@ -611,6 +615,43 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             - `Entity`를 바로 반환해버리면 JSON 생성 라이브러리로 인해 toString()이 호출된다.
             - `Entity` 대신 DTO로 반환하자.
 
+<br>
+
+### 1:N 관계
+- `일대다 단방향`은 일(1)이 연관 관계의 `주인`이다.
+- 문제는 테이블 일대다 관계는 항상 다(N)쪽에 `외래 키`가 있다. 
+- 테이블과 객체 패러다임 차이로 인해 `주인` 반대편에서 `외래키`를 관리하는 특이성이 생겼다.
+<pre>
+    <code>public class Team {</code>
+    <code>    ...</code>
+    <code>    @OneToMany</code>
+    <code>    @JoinColumn(name = "TEAM_ID")</code>
+    <code>    List&lt;Member&gt; members = new ArrayList&lt;&gt;();</code>
+    <code>}</code>
+</pre>
+
+- 일(1) `Entity`에 @JoinColumn을 꼭 사용해야 한다. 그렇지 않으면 조인테이블(중간 테이블)이 생긴다.
+<pre>
+    <code>create table Team_Member ( ... )</code>
+</pre>
+
+- 팀의 members값이 변경되면 회원의 teamId (`외래키`)를 변경해주어야 한다.
+- 즉, 연관 관계 관리를 위해 추가로 옆 테이블의 update sql을 실행한다.
+- 실무에서 지양하는 연관 관계 (테이블이 수십개가 엮어서 진행할 경우 외래키가 있는 테이블이 update 되므로 조심해야함)
+- 일대다 단방향 매핑보다 다대일 양방향 연관 관계를 맺는 방식을 더 선호.
+<pre>
+    <code>Member member = new Member(); </code>
+    <code>member.setName("member1"); </code>
+    <code>em.persist(member); </code>
+    <code></code>
+    <code>Team team = new Team(); </code>
+    <code>team.setName("TeamA"); </code>
+    <code>team.getMembers().add(member); // MEMBER 테이블에 있는 TEAM_ID 외래키 update가 된다.</code>
+    <code>em.persist(team); </code>
+</pre>
+    
+<br>
+
 ### 1:1 관계
 - @OneToOne
 - `주인`으로 주 테이블이나 대상 테이블 중에 선택
@@ -626,14 +667,15 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         - 단점 : `프록시`의 한계로 인해 지연 로딩으로 설정해도 항상 즉시 로딩이 된다.
 - `외래 키`에 DB UNIQUE 제약 조건을 추가해야 1:1 관계가 성립된다.
 - 명확한 1:1 관계라면 주 테이블에 `외래 키`를 권장 한다.
-    - 주 테이블은 주로 실무에서 사용하고 있으므로 미리 조회되어 있는 상태라 조금이나마 성능 이슈가 있다.
+    - 주 테이블은 주로 실무에서 사용하고 있으므로 미리 조회되어 있는 상태라 조금이나마 성능 최적가 있다.
 
+<br>
 
 ### N:M 관계
 - RDB는 다대다 관계를 표현할 수 없다.
 - 다만 객체는 컬렉션을 사용해서 객체 2개로 다대다 관계가 가능하다.
 - 중간테이블(조인테이블)을 추가해서 다대일 or 일대다 관계로 풀어내야 한다.
-- JPA는 객체는 되고 테이블은 안되기 때문에 @ManyToMany를 지원한다.
+- 객체는 되고 테이블은 안되므로 JPA에서 @ManyToMany를 지원해주긴 하는데 지양하도록 하자.
 - 회원은 여러 상품을 가질 수 있고, 여러명의 회원에 상품이 포함될 수 있을때,
     <pre>
         <code>public class Member {</code>
@@ -654,8 +696,11 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
      </pre>   
 - 실무에서 사용 X, 중간 테이블에 컬럼 추가가 불가능.   
 
+<br>
+
 #### 다대다 대체
 - 연결 테이블용 `Entity` 추가 (연결 테이블을 `Entity`로 승격)
+- N:M 관계를 중간테이블을 이용해서 1:N, N:1
 - @ManyToMany -> @OneToMany, @ManyToOne
     <pre>
         <code>public class MemberProduct {</code>
@@ -677,9 +722,15 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>}</code>
     </pre>
 
+<br>
 
 ##### @ManyToOne에 mappedBy 속성이 없는 이유
 - mappedBy 스펙을 양쪽 연관 관계에다가 풀게되면 JPA는 개발자에게 잘못된 관계를 맺도록 <br>
   선택의 여지를 열어주게 되어 혼란만 가중시키기 때문에
+  
+<br>
+
+
+
     
     

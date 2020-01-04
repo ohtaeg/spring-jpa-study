@@ -1,5 +1,6 @@
 package com.ohtaeg.study.shop;
 
+import com.ohtaeg.study.shop.domain.Item;
 import com.ohtaeg.study.shop.domain.Member;
 
 import javax.persistence.EntityManager;
@@ -17,6 +18,12 @@ public class JpaMain {
         transaction.begin();
 
         try {
+            executeJPQL(entityManager);
+
+            Item item = new Item();
+            item.setId(1L);
+            entityManager.persist(item);
+
             transaction.commit();
         } catch (Exception e) {
             transaction.rollback();
@@ -29,13 +36,10 @@ public class JpaMain {
     // JPQL을 통한 플러시
     public static void executeJPQL(EntityManager entityManager) {
         // 비영속
-        Member member = new Member();
-        member.setId(11L);
-        member.setName("ohtaeg");
+        Member member = new Member("ohtaeg", "naver", "incheon", "bup", "illsin");
 
-        Member otherMember = new Member();
-        otherMember.setId(22L);
-        otherMember.setName("ohtaeg2");
+        Member otherMember = new Member("ohtaeg2", "naver2", "incheon", "bup", "illsin");
+
 
         // 영속
         entityManager.persist(member);
@@ -47,7 +51,7 @@ public class JpaMain {
          * 트랜잭션 커밋시점에 데이터 변경시 update 쿼리를 만들어서 날린다.
          * persist()를 사용안해도, 자바 컬렉션처럼 다룰 수 있음.
          */
-        otherMember.setName("hello jpa");
+        otherMember.changeName("hello jpa1");
 
         /**
          * JPQL

@@ -20,43 +20,27 @@ public class OrderItem {
     private int orderPrice;
     private int count;
 
+    public void changeOrder(final Order order) {
+        this.order = order;
+    }
+
     public Long getId() {
         return id;
-    }
-
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
-    public int getOrderPrice() {
-        return orderPrice;
-    }
-
-    public void setOrderPrice(final int orderPrice) {
-        this.orderPrice = orderPrice;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(final int count) {
-        this.count = count;
     }
 
     public Order getOrder() {
         return order;
     }
 
-    public void setOrder(final Order order) {
-        this.order = order;
-    }
-
     public Item getItem() {
         return item;
     }
 
-    public void setItem(final Item item) {
-        this.item = item;
+    public int getOrderPrice() {
+        return orderPrice;
+    }
+
+    public int getCount() {
+        return count;
     }
 }

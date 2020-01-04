@@ -2,6 +2,7 @@ package com.ohtaeg.study.shop.domain;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,8 +18,13 @@ public class Order {
     private Member member;
 
     @OneToMany(mappedBy = "order")
-    private List<OrderItem> orderItems;
+    private List<OrderItem> orderItems = new ArrayList<>();
 
+    @OneToOne
+    @JoinColumn(name = "DELIVERY_ID")
+    private Delivery delivery;
+
+    @Column(name = "ORDER_TIME", nullable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
     private LocalDateTime orderTime;
 
     @Enumerated(EnumType.STRING)
@@ -26,38 +32,30 @@ public class Order {
 
     public void addOrderItem(final OrderItem orderItem) {
         orderItems.add(orderItem);
-        orderItem.setOrder(this);
+        orderItem.changeOrder(this);
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
     public Member getMember() {
         return member;
     }
 
-    public void setMember(final Member member) {
-        this.member = member;
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public Delivery getDelivery() {
+        return delivery;
     }
 
     public LocalDateTime getOrderTime() {
         return orderTime;
     }
 
-    public void setOrderTime(final LocalDateTime orderTime) {
-        this.orderTime = orderTime;
-    }
-
     public OrderStatus getStatus() {
         return status;
-    }
-
-    public void setStatus(final OrderStatus status) {
-        this.status = status;
     }
 }

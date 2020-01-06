@@ -399,10 +399,10 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 <br>
 
 ## 연관관계 매핑
-- 단방향 관계 : 두 엔티티가 관계를 맺을 때 한 쪽의 엔티티만 참조하는 것
-- 양방향 관계 : 두 엔티티가 서로 참조 하는 것
+- 단방향 관계 : 두 `Entity`가 관계를 맺을 때 한 쪽의 `Entity`만 참조하는 것
+- 양방향 관계 : 두 `Entity`가 서로 참조 하는 것
 - 데이터 모델링은 관계를 맺으면 양방향 관계로 자동 매핑이 되지만 <br>
-  객체지향 모델링은 어떤 엔티티가 중심이냐에 따라 단방향인지, 양방향인지 선택 해야 한다.
+  객체지향 모델링은 어떤 `Entity`가 중심이냐에 따라 단방향인지, 양방향인지 선택 해야 한다.
   
 - `Entity`들은 대부분 다음중 하나의 관계를 맺고 있기에 서로 어떤 연관 관계를 맺는지 파악하는것은 매우 중요하다.
     - 다대일 (N : 1) : @ManyToOne
@@ -429,7 +429,8 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>Team findTeam = em.find(Team.class, findTeamId);</code>
     </pre>
     
-    - 위와 같이 테이블은 `외래 키 식별자`로 조인을 사용해서 연관된 테이블을 찾는다.
+    - 위와 같이 테이블은 `외래 키 식별자`로 조인을 사용해서 연관된 테이블을 찾는다. <br>
+    
     - 그러나 객체 지향 방식은 **참조**를 사용해서 연관된 객체를 찾기때문에 객체 지향적인 방법이 아니다.
     - JPA에서는 연관 관계에 있는 테이블의 PK를 멤버변수로 갖지 않고, **`Entity` 객체 자체를 통째로 참조한다.**
     
@@ -440,7 +441,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code></code>
         <code>Member member = new Member(); </code>
         <code>member.setName("member1"); </code>
-        <code>member.setTeamId(team); </code>
+        <code>member.setTeam(team);  // 객체 참조</code>
         <code>em.persist(member); </code>
         <code></code>
         <code>Member findMember = em.find(Member.class, member.getId();</code>
@@ -488,7 +489,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
 <br>
 
 ### 단방향 연관 관계
-- 한쪽의 `Entity`가 상 `Entity`를 참조하는 것을 말한다.
+- 한쪽의 `Entity`가 상대 `Entity`를 참조하는 것을 말한다.
 - `다대일 관계 (N : 1)`
     - ex) 여러 회원은 하나의 팀에만 소속되고, 회원과 팀은 `다대일 관계 (N : 1)`일때
     - `@ManyToOne`
@@ -511,16 +512,16 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
         <code>}</code>
     </pre>
     - 단방향 관계를 맺었으므로 외래키가 생겼기 때문에 현재 회원은 팀의 정보를 갖고 올 수 있게 되었다.
-    - 팀에서 회원 정보를 갖고 오려면 ?   양방향 연관 관계를 맺어야 한다.  
+    - 팀에서 회원 정보를 갖고 오려면 ?  ->  양방향 연관 관계를 맺어야 한다.  
 <br>
 
 ### 양방향 연관 관계
 - 양쪽 `Entity`들을 서로 참조해서 관계를 맺을 수 있다.
 - 단방향 매핑만으로도 이미 양방향 연관 관계 매핑은 완료. **JPA 설계시 단방향 연관 관계 매핑으로 우선시 한다.**
-- JPQL에서 역방향으로 탐색할일이 많음. 그럴때마다 양방향을 추가하면 된다.
+- JPQL에서 역방향으로 탐색할 일이 많음. 그럴때마다 양방향을 추가하면 된다.
 - `다대일 관계 (N : 1)`
     - ex) 여러 회원은 하나의 팀에만 소속되고 하나의 팀은 여러 회원을 가질때,
-    - `OneToMany`
+    - `@OneToMany`
         
         | 속성              |      기능           |  기본값 |
         |------------------|:-------------------|:-------|
@@ -615,6 +616,7 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
             - `Entity`를 바로 반환해버리면 JSON 생성 라이브러리로 인해 toString()이 호출된다.
             - `Entity` 대신 DTO로 반환하자.
 
+<br>
 <br>
 
 ### 1:N 관계
@@ -729,8 +731,148 @@ persist()를 수행한 `Entity`들을 가져오려고 할 경우 문제가 발�
   선택의 여지를 열어주게 되어 혼란만 가중시키기 때문에
   
 <br>
+<br>
 
+### 상속 관계
+- 객체의 상속구조와 RDB의 Super타입 - Sub타입 관계를 매핑하는 방법.
+- 객체는 상속 관계가 있지만 RDB는 상속 관계 대신 Super타입 - Sub타입 관계라는 논리적인 모델링 기법이 있다.
+- JPA는 RDB의 Super타입 - Sub타입 논리적인 기법을 물리적인 모델인 상속 관계로 해결하기위해 3가지의 방식을 지원한다.
+    - 조인 전략 : 부모의 PK를 자식들이 FK를 갖는 방법
+    - 단일 테이블 전략 : 부모 - 자식 관계를 하나의 테이블로 합치는 방법 (Default 전략)
+    - ~~서브타입 테이블 변환 전략 : 부모의 속성들을 자식들이 속성으로 갖는 방법~~
 
+- ex) 물품은 앨범, 영화, 책으로 관계가 이루어져 있을때, 
+<pre>
+    <code>@Entity</code>
+    <code>public abstract class Item {</code>
+    <code>    @Id</code>
+    <code>    @GenerateValue</code>
+    <code>    private Long id;</code>
+    <code>    private String name;</code>
+    <code>    private price;</code>
+    <code>}</code>
+    <code></code>
+    <code>@Entity</code>
+    <code>public class Album extends Item {</code>
+    <code>    private String artist;</code>
+    <code>}</code>
+    <code></code>
+    <code>@Entity</code>
+    <code>public class Movie extends Item {</code>
+    <code>    private String director;</code>
+    <code>    private String actor;</code>
+    <code>}</code>
+    <code></code>
+    <code>@Entity</code>
+    <code>public class Book extends Item {</code>
+    <code>    private String author;</code>
+    <code>    private String isbn;</code>
+    <code>}</code>
+</pre>
 
+- 기본으로 단일 테이블 전략으로 설정됨.
+<pre>
+    <code>create table Item (</code>
+    <code>    ITEM_ID bigint not null,</code>
+    <code>    name varchar(255),</code>
+    <code>    price integer not null,</code>
+    <code>    author varchar(255),</code>
+    <code>    artist varchar(255),</code>
+    <code>    isbn varchar(255),</code>
+    <code>    ...</code>
+    <code>    primary key (ITEM_ID)</code>
+</pre>
+
+#### 조인 전략
+- JPA와 가장 유사한 모델
+- @Inheritance : 어떤 상속 전략을 사용할지 ( 기본값 단일 테이블 )
+- @DiscriminatorColumn : 부모 `Entity`에 사용하며, 부모가 자식을 구분할때 자식의 테이블 명이 부모 테이블에 값으로 저장됨.
+- @DiscriminatorColumn을 항상 정의 하는것이 좋다.
+    - ex) Item table
+        
+        | ITEM_ID | DTYPE | NAME  | PRICE |
+        |---------|:------|:------|-------|
+        | 1       | Movie | 겨울왕국| 10000 |
+        | 2       | Book  | 클린코드| 10000 |
+        
+    - name : 컬럼 명 변경 가능 (기본 "DTYPE")
     
+- @DiscriminatorValue : 자식 `Entity`에 사용하며, 부모 테이블의 DTYPE에 자식 테이블 명이 아닌 설정한 값으로 변경이 가능하다.
+    - ex) Item table
+        
+        | ITEM_ID | DTYPE | NAME  | PRICE |
+        |---------|:------|:------|-------|
+        | 1       | A     | 겨울왕국| 10000 |
+        | 2       | B     | 클린코드| 10000 |
+<pre>
+    <code>@Entity</code>
+    <code>@Inheritance(strategy = InheritanceType.JOINED) // 조인 전략 설정</code>
+    <code>@DiscriminatorColumn</code>
+    <code>public abstract class Item {</code>
+    <code>    @Id</code>
+    <code>    @GenerateValue</code>
+    <code>    private Long id;</code>
+    <code>    private String name;</code>
+    <code>    private price;</code>
+    <code>}</code>
+</pre>
+<pre>
+    <code>create table Item (</code>
+    <code>    ITEM_ID bigint not null,</code>
+    <code>    DTYPE varchar(31) not null, // @DiscriminatorColumn</code>
+    <code>    name varchar(255),</code>
+    <code>    price integer not null,</code>
+    <code>    primary key (ITEM_ID)</code>
+    <code>)</code>
+    <code></code>
+    <code>create table Album (</code>
+    <code>    artist varchar(255),</code>
+    <code>    id bigint not null,</code>
+    <code>    primary key (id)</code>
+    <code>)</code>
+    <code>...</code>
+</pre>
+
+- Item의 id가 Sub 테이블들의 PK + FK로 가지게 된다.
+- INSERT 쿼리를 실행하면 먼저 Item에 INSERT후 해당 Sub클래스를 INSERT 한다.
+- SELECT시에는 조인해서 갖고 오게 된다.
+- 장점 
+    1. 정규화가 되어 만들어지기 때문에 데이터 중복 제거
+    2. 외래 키 참조 무결성 제약조건 활용 가능
+    3. 저장공간 효율화
+- 단점
+    1. 조회시 조인을 사용되어 성능 저하
+    2. 조회 쿼리 복잡함  
+    
+#### 단일 테이블 전략
+- @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+- 하나의 테이블이 부모 - 자식 속성들을 다 관리한다.
+- 자식 테이블을 구별하는 방법은 @DiscriminatorColumn을 통해 구별한다.
+<pre>
+    <code>create table Item (</code>
+    <code>    ITEM_ID bigint not null,</code>
+    <code>    name varchar(255),</code>
+    <code>    price integer not null,</code>
+    <code>    author varchar(255),</code>
+    <code>    artist varchar(255),</code>
+    <code>    isbn varchar(255),</code>
+    <code>    ...</code>
+    <code>    DTYPE varchar(31) not null, // @DiscriminatorColumn</code>
+    <code>    primary key (ITEM_ID)</code>
+</pre>
+- 장점 
+    1. 조인이 필요 없어서 성능이 빠름
+    2. 조회 쿼리 단순함
+- 단점
+    1. 자식 테이블의 컬럼들의 null 허용
+    2. 테이블이 커지면 문제임.
+
+#### 각 구현 클래스 전략
+- @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+- 부모 테이블은 만들어지지않고 부모 클래스의 속성들을 가진 자식 테이블들만 만들어 진다.
+    - @DiscriminatorColumn가 필요 없다.
+- 이 전략은 사용하지 말것.
+- 단점
+    1. join이 아닌 union을 사용하므로 복잡하고 비효율적으로 동작함.
+    2. 자식 테이블을 통합해서 쿼리하기 어려움.
     

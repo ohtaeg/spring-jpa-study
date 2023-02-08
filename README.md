@@ -1,4 +1,4 @@
-# Spring JPA
+# JPA
 
 - Java Persistence Api
 - ORM 기술 표준

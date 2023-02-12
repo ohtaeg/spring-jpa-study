@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- JPA 설정 파일은 persistence로 시작한다. -->
+<!--JPA 2.2 버전을 사용하겠다고 명시-->
+<persistence version="2.2"
+             xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <!-- 연결할 데이터베이스당 하나의 영속성 유닛을 등록, jpabook 이라는 이름을 부여 -->
+    <persistence-unit name="jpabook">
+        <!-- jpa에서 사용할 엔티티 클래스 등록, 보통 자동으로 인식하지만 환경에 따라 인식 못하는 경우 직접 설정-->
+        <class>org.example.entity.Member</class>
+
+        <properties>
+            <!-- 필수 속성 -->
+            <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="javax.persistence.jdbc.user" value="sa"/>
+            <property name="javax.persistence.jdbc.password" value=""/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:testdb;MODE=MYSQL"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>  <!-- 방언 설정 -->
+
+            <!-- 옵션 -->
+            <property name="hibernate.show_sql" value="true"/>          <!-- 쿼리 출력 -->
+            <property name="hibernate.format_sql" value="true"/>        <!-- 출력 되는 쿼리 포맷팅 -->
+            <property name="hibernate.use_sql_comments" value="true"/>  <!-- 쿼리 출력시 쿼리가 실행된 이유를 주석으로 추가 -->
+            <property name="hibernate.jdbc.batch_size" value="10"/>     <!-- 쓰기 지연시, 최대 갯수 설정 -->
+            <property name="hibernate.hbm2ddl.auto" value="create" />   <!-- DDL 자동 생성 설정 -->
+        </properties>
+    </persistence-unit>
+</persistence>

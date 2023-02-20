@@ -8,7 +8,7 @@
     <!-- 연결할 데이터베이스당 하나의 영속성 유닛을 등록, jpabook 이라는 이름을 부여 -->
     <persistence-unit name="jpabook">
         <!-- jpa에서 사용할 엔티티 클래스 등록, 보통 자동으로 인식하지만 환경에 따라 인식 못하는 경우 직접 설정-->
-        <class>org.example.entity.Member</class>
+        <class>org.example.chapter02.entity.Member</class>
 
         <properties>
             <!-- 필수 속성 -->

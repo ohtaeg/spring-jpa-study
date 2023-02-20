@@ -1,10 +1,10 @@
-package org.example;
+package org.example.chapter02;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
-import org.example.entity.Member;
+import org.example.chapter02.entity.Member;
 
 import java.util.List;
 
